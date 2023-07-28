@@ -115,6 +115,7 @@ public class WingFlightPlusGlideEditor : Editor
 		public float maxGlidePitch = 1.5f;
 		public float minVelocityThreshold = 5f;
 		public float maxVelocityThreshold = 20f;
+		private float targetVolume; // Volume currently being faded to
 
 		// Essential Variables
 		private VRCPlayerApi LocalPlayer;
@@ -229,6 +230,7 @@ public class WingFlightPlusGlideEditor : Editor
 					{
 						// play the gliding sound effect
 						glidingSound.Play();
+						targetVolume = 1f;
 					}
 
 					float pitch = Mathf.Lerp(
@@ -244,6 +246,26 @@ public class WingFlightPlusGlideEditor : Editor
 					if (glidingSound.isPlaying)
 					{
 						// stop the gliding sound effect
+						targetVolume = 0f;
+					}
+				}
+			}
+		}
+
+		// Used to smoothly transition the flight sound volume levels, would use a coroutine but not supported in udon
+		private void UpdateAudioVolumeLevels()
+		{
+			if (this.glidingSoundsEnabled)
+			{
+				// Update the sound volume smoothly
+				float volumeDiff = targetVolume - glidingSound.volume;
+				float volumeStep = volumeDiff * Time.deltaTime;
+
+				if (Mathf.Abs(volumeStep) > 0f)
+				{
+					glidingSound.volume += volumeStep;
+					if (glidingSound.volume < 0f)
+					{
 						glidingSound.Stop();
 					}
 				}
@@ -261,6 +283,7 @@ public class WingFlightPlusGlideEditor : Editor
 					FlightTick(0.011f);
 					FlightSoundsTick();
 				}
+				UpdateAudioVolumeLevels();
 			}
 			if (spinningRightRound)
 			{
