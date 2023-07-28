@@ -111,6 +111,10 @@ public class WingFlightPlusGlideEditor : Editor
 		private const float FLIGHT_SOUND_START_VELOCITY = 5f;
 		private bool glidingSoundsEnabled = true;
 		private AudioSource glidingSound;
+		public float minGlidePitch = 0.5f;
+		public float maxGlidePitch = 1.5f;
+		public float minVelocityThreshold = 5f;
+		public float maxVelocityThreshold = 20f;
 
 		// Essential Variables
 		private VRCPlayerApi LocalPlayer;
@@ -215,10 +219,10 @@ public class WingFlightPlusGlideEditor : Editor
 		private void FlightSoundsTick()
 		{
 			// check if the player is flying
-			if (this.glidingSoundsEnabled && this.isFlying)
-			{
+			if (this.glidingSoundsEnabled && this.isFlying) {
+				var velocityMagnitude = LocalPlayer.GetVelocity().magnitude;
 				// check if the player is going fast enough to play the gliding sound effect
-				if (LocalPlayer.GetVelocity().magnitude > FLIGHT_SOUND_START_VELOCITY)
+				if (velocityMagnitude > FLIGHT_SOUND_START_VELOCITY)
 				{
 					// check if the gliding sound effect is playing
 					if (!glidingSound.isPlaying)
@@ -226,10 +230,16 @@ public class WingFlightPlusGlideEditor : Editor
 						// play the gliding sound effect
 						glidingSound.Play();
 					}
+
+					float pitch = Mathf.Lerp(
+						minGlidePitch,
+						maxGlidePitch,
+						Mathf.InverseLerp(minVelocityThreshold, maxVelocityThreshold, velocityMagnitude)
+					);
+					glidingSound.pitch = pitch;
 				}
 				// check if the player is going slow enough to stop the gliding sound effect
-				else if (LocalPlayer.GetVelocity().magnitude < FLIGHT_SOUND_START_VELOCITY)
-				{
+				else if (velocityMagnitude < FLIGHT_SOUND_START_VELOCITY) {
 					// check if the gliding sound effect is playing
 					if (glidingSound.isPlaying)
 					{
