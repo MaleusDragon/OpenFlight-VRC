@@ -107,6 +107,11 @@ public class WingFlightPlusGlideEditor : Editor
 		public bool bankingTurns = true;
 		bool bankingTurns_DEFAULT = true;
 
+		// Sound effect related variables
+		private const float FLIGHT_SOUND_START_VELOCITY = 5f;
+		private bool glidingSoundsEnabled = true;
+		private AudioSource glidingSound;
+
 		// Essential Variables
 		private VRCPlayerApi LocalPlayer;
 		private double debugTemp;
@@ -182,6 +187,7 @@ public class WingFlightPlusGlideEditor : Editor
 		public void Start()
 		{
 			LocalPlayer = Networking.LocalPlayer;
+			glidingSound = GetComponent<AudioSource>();
 			//oldGravityStrength = LocalPlayer.GetGravityStrength();
 			//oldWalkSpeed = LocalPlayer.GetWalkSpeed();
 			//oldRunSpeed = LocalPlayer.GetRunSpeed();
@@ -205,6 +211,35 @@ public class WingFlightPlusGlideEditor : Editor
 			}
 		}
 
+		// check current player velocity and if its over a certain level then play a sound effect
+		private void FlightSoundsTick()
+		{
+			// check if the player is flying
+			if (this.glidingSoundsEnabled && this.isFlying)
+			{
+				// check if the player is going fast enough to play the gliding sound effect
+				if (LocalPlayer.GetVelocity().magnitude > FLIGHT_SOUND_START_VELOCITY)
+				{
+					// check if the gliding sound effect is playing
+					if (!glidingSound.isPlaying)
+					{
+						// play the gliding sound effect
+						glidingSound.Play();
+					}
+				}
+				// check if the player is going slow enough to stop the gliding sound effect
+				else if (LocalPlayer.GetVelocity().magnitude < FLIGHT_SOUND_START_VELOCITY)
+				{
+					// check if the gliding sound effect is playing
+					if (glidingSound.isPlaying)
+					{
+						// stop the gliding sound effect
+						glidingSound.Stop();
+					}
+				}
+			}
+		}
+
 		public void Update()
 		{
 			if ((LocalPlayer != null) && LocalPlayer.IsValid())
@@ -214,6 +249,7 @@ public class WingFlightPlusGlideEditor : Editor
 				{
 					dtFake = dtFake - 0.011f;
 					FlightTick(0.011f);
+					FlightSoundsTick();
 				}
 			}
 			if (spinningRightRound)
